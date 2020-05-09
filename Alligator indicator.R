@@ -20,7 +20,9 @@ USDMXN$mean <- (USDMXN$high + USDMXN$low)/2
 
 
 # This is used to save the data into an excel file
-wb <- loadWorkbook("TSLA.xlsx")
+# I created the "TSLA.xlsx"  file in my computer so if yo don't create it in 
+# yours it won't run this piece of code
+wb <- loadWorkbook("TSLA.xlsx") 
 writeWorksheet(object = wb, data = TSLA, sheet = getSheets(wb)[1])
 renameSheet(wb,getSheets(wb)[1],"TSLA")
 createSheet(wb, "USDMXN")
@@ -63,7 +65,7 @@ TSLA$teeth[Q] <- (TSLA$teeth[N+S]*(N-1)+TSLA$mean[Q])/N
 
 i <- Q + 1
 while(i < nrow(TSLA)){
-    TSLA$teeth[i] <- (TSLA$teeth[i-1]* N - TSLA$teeth[i-1]+ TSLA$mean[i-1])/N
+    TSLA$teeth[i] <- ((TSLA$teeth[i-1]* N) - TSLA$teeth[i-1]+ TSLA$mean[i-1])/N
     i <- i+1
 }
 
@@ -78,7 +80,7 @@ TSLA$lips[Q] <- (TSLA$lips[N+S]*(N-1)+TSLA$mean[Q])/N
 
 i <- Q + 1
 while(i < nrow(TSLA)){
-    TSLA$lips[i] <- (TSLA$lips[i-1]* N - TSLA$lips[i-1]+ TSLA$mean[i-1])/N
+    TSLA$lips[i] <- ((TSLA$lips[i-1]* N) - TSLA$lips[i-1]+ TSLA$mean[i-1])/N
     i <- i+1
 }
 
@@ -111,7 +113,7 @@ USDMXN$jaw[Q] <- (USDMXN$jaw[N+S]*(N-1)+USDMXN$mean[Q])/N
 
 i <- Q
 while(i < nrow(USDMXN)){
-    USDMXN$jaw[i] <- (USDMXN$jaw[i-1]* N - USDMXN$jaw[i-1]+ USDMXN$mean[i-1])/N
+    USDMXN$jaw[i] <- ((USDMXN$jaw[i-1]* N) - USDMXN$jaw[i-1]+ USDMXN$mean[i-1])/N
     i <- i+1
 }
 
@@ -126,7 +128,7 @@ USDMXN$teeth[Q] <- (USDMXN$teeth[N+S]*(N-1)+USDMXN$mean[Q])/N
 
 i <- Q
 while(i < nrow(USDMXN)){
-    USDMXN$teeth[i] <- (USDMXN$teeth[i-1]* N - USDMXN$teeth[i-1]+ USDMXN$mean[i-1])/N
+    USDMXN$teeth[i] <- ((USDMXN$teeth[i-1]* N) - USDMXN$teeth[i-1]+ USDMXN$mean[i-1])/N
     i <- i+1
 }
 
@@ -141,7 +143,7 @@ USDMXN$lips[Q] <- (USDMXN$lips[N+S]*(N-1)+USDMXN$mean[Q])/N
 
 i <- Q
 while(i < nrow(USDMXN)){
-    USDMXN$lips[i] <- (USDMXN$lips[i-1]* N - USDMXN$lips[i-1]+ USDMXN$mean[i-1])/N
+    USDMXN$lips[i] <- ((USDMXN$lips[i-1]* N) - USDMXN$lips[i-1]+ USDMXN$mean[i-1])/N
     i <- i+1
 }
 
@@ -161,7 +163,6 @@ USDMXN %>%
     geom_line(aes(x = date, y = teeth), color = "red") +
     geom_line(aes(x = date, y = lips), color = "darkgreen")
 
-# Apoyo para cálculo de la SMMA (Media Movil Suavizada):
 # https://www.metatrader5.com/es/terminal/help/indicators/trend_indicators/ma
 
 
