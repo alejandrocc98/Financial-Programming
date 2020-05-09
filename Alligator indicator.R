@@ -163,3 +163,5 @@ USDMXN %>%
 
 # Apoyo para cálculo de la SMMA (Media Movil Suavizada):
 # https://www.metatrader5.com/es/terminal/help/indicators/trend_indicators/ma
+
+
