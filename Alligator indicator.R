@@ -7,7 +7,7 @@ library(IntroCompFinR)
 library(XLConnect)
 
 # Setting the timeframe for the information from today to one year ago
-from<- Sys.Date()-366
+from<- Sys.Date()-365
 to <- Sys.Date()
 
 # Downloading the data from Tesla and USD/MXN
@@ -44,14 +44,16 @@ TSLA$jaw[N+S] <- sum(TSLA$mean[1:N])/N
 Q <- N + S + 1
 # The second value is calculated with this formula:
 # SMMA(i) = (SMMA1*(N-1)+mean(i))/N
-TSLA$jaw[Q] <- (TSLA$jaw[N+S]*(N-1)+TSLA$mean[Q])/N
+TSLA$jaw[Q] <- (TSLA$jaw[N+S]*(N-1)+TSLA$mean[Q-S])/N
 
 # The subsequent values are calculated with a "while" loop and this formula:
 # SMMA(i) = ((SMMA(i-1)*N)-SMMA(i-1) + mean(i))/N
 i <- Q + 1
+C <- 15
 while(i < nrow(TSLA)){
-    TSLA$jaw[i] <- ((TSLA$jaw[i-1]* N) - TSLA$jaw[i-1]+ TSLA$mean[i-1])/N
+    TSLA$jaw[i] <- ((TSLA$jaw[i-1]* N) - TSLA$jaw[i-1]+ TSLA$mean[C])/N
     i <- i+1
+    C <- C+1
 }
 
 # Teeth line
@@ -61,12 +63,14 @@ S <- 5
 
 TSLA$teeth[N+S] <- sum(TSLA$mean[1:N])/N
 Q <- N + S + 1
-TSLA$teeth[Q] <- (TSLA$teeth[N+S]*(N-1)+TSLA$mean[Q])/N
+TSLA$teeth[Q] <- (TSLA$teeth[N+S]*(N-1)+TSLA$mean[Q-S])/N
 
 i <- Q + 1
+C <- 10
 while(i < nrow(TSLA)){
-    TSLA$teeth[i] <- ((TSLA$teeth[i-1]* N) - TSLA$teeth[i-1]+ TSLA$mean[i-1])/N
+    TSLA$teeth[i] <- ((TSLA$teeth[i-1]* N) - TSLA$teeth[i-1]+ TSLA$mean[C])/N
     i <- i+1
+    C <- C+1
 }
 
 # Lips Line
@@ -76,12 +80,14 @@ S <- 3
 
 TSLA$lips[N+S] <- sum(TSLA$mean[1:N])/N
 Q <- N + S + 1
-TSLA$lips[Q] <- (TSLA$lips[N+S]*(N-1)+TSLA$mean[Q])/N
+TSLA$lips[Q] <- (TSLA$lips[N+S]*(N-1)+TSLA$mean[Q-S])/N
 
 i <- Q + 1
+C <- 7
 while(i < nrow(TSLA)){
-    TSLA$lips[i] <- ((TSLA$lips[i-1]* N) - TSLA$lips[i-1]+ TSLA$mean[i-1])/N
+    TSLA$lips[i] <- ((TSLA$lips[i-1]* N) - TSLA$lips[i-1]+ TSLA$mean[C])/N
     i <- i+1
+    C <- C+1
 }
 
 
@@ -109,12 +115,14 @@ S <- 8
 
 USDMXN$jaw[N+S] <- sum(USDMXN$mean[1:N])/N
 Q <- N + S + 1
-USDMXN$jaw[Q] <- (USDMXN$jaw[N+S]*(N-1)+USDMXN$mean[Q])/N
+USDMXN$jaw[Q] <- (USDMXN$jaw[N+S]*(N-1)+USDMXN$mean[Q-S])/N
 
 i <- Q
+C <- 15
 while(i < nrow(USDMXN)){
-    USDMXN$jaw[i] <- ((USDMXN$jaw[i-1]* N) - USDMXN$jaw[i-1]+ USDMXN$mean[i-1])/N
+    USDMXN$jaw[i] <- ((USDMXN$jaw[i-1]* N) - USDMXN$jaw[i-1]+ USDMXN$mean[C])/N
     i <- i+1
+    C <- C+1
 }
 
 # Teeth line
@@ -124,12 +132,14 @@ S <- 5
 
 USDMXN$teeth[N+S] <- sum(USDMXN$mean[1:N])/N
 Q <- N + S + 1
-USDMXN$teeth[Q] <- (USDMXN$teeth[N+S]*(N-1)+USDMXN$mean[Q])/N
+USDMXN$teeth[Q] <- (USDMXN$teeth[N+S]*(N-1)+USDMXN$mean[Q-S])/N
 
 i <- Q
+C <- 10
 while(i < nrow(USDMXN)){
-    USDMXN$teeth[i] <- ((USDMXN$teeth[i-1]* N) - USDMXN$teeth[i-1]+ USDMXN$mean[i-1])/N
+    USDMXN$teeth[i] <- ((USDMXN$teeth[i-1]* N) - USDMXN$teeth[i-1]+ USDMXN$mean[C])/N
     i <- i+1
+    C <- C+1
 }
 
 # Lips Line
@@ -139,12 +149,14 @@ S <- 3
 
 USDMXN$lips[N+S] <- sum(USDMXN$mean[1:N])/N
 Q <- N + S + 1
-USDMXN$lips[Q] <- (USDMXN$lips[N+S]*(N-1)+USDMXN$mean[Q])/N
+USDMXN$lips[Q] <- (USDMXN$lips[N+S]*(N-1)+USDMXN$mean[Q-S])/N
 
 i <- Q
+C <- 7
 while(i < nrow(USDMXN)){
     USDMXN$lips[i] <- ((USDMXN$lips[i-1]* N) - USDMXN$lips[i-1]+ USDMXN$mean[i-1])/N
     i <- i+1
+    C <- C+1
 }
 
 
@@ -165,4 +177,6 @@ USDMXN %>%
 
 # https://www.metatrader5.com/es/terminal/help/indicators/trend_indicators/ma
 
-
+writeWorksheet(object = wb, data = TSLA, sheet = "TSLA")
+writeWorksheet(object = wb, data = USDMXN, sheet = "USDMXN")
+saveWorkbook(wb, "alligator.xlsx")
