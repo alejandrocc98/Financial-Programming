@@ -15,8 +15,8 @@ mylm <- function(retstock,retindex){
     names(output)<-c("b0","se(b0)","p-value(b0)","b1","se(b1)","p-value(b1)","Validobs")
     output
 }
-from <- "2017-01-01"
-to <- "2019-12-31"
+from <- "2015-01-01"
+to <- "2020-01-31"
 
 getSymbols(c("BIMBOA.MX","^MXX"), from = from, to = to, periodicity = "monthly")
 prices <- Ad(merge(BIMBOA.MX,MXX))
@@ -49,9 +49,23 @@ capm <- function(stockr, mktr, rfr) {
                      ,"min(b1)","max(b1)","# non missing")
     return(output)
 }
-rfr.df <- as.data.frame(getSymbols("cap", from = from, to = to, 
+rfr.df <- as.data.frame(getSymbols("INTGSTMXM193N", from = from, to = to, 
                                    periodicity ="monthly", src = "FRED",
-                                   auto.assign = FALSE)[index(prices)]/100/12)
+                                   auto.assign = FALSE)[index(prices)])
+
+i <- 1
+while (i< nrow(rfr.df)+1) {
+    rfr.df[i,1]<-rfr.df[i,1]/100
+    i <- i+1
+    
+}
+i <- 1
+while (i< nrow(rfr.df)+1) {
+    rfr.df[i,1]<-(1+rfr.df[i,1])^(1/12)-1
+    i <- i+1
+    
+}
+
 capm_results <- capm(returns.df[,1],returns.df[,2],rfr.df[,1])
 
 OER <- function(stock,market,rf) {
