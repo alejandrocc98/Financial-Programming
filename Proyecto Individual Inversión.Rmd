@@ -1,0 +1,344 @@
+---
+title: "Proyecto Individual Inversiones"
+author: "Juan Alejandro Camacho Castillo"
+date: "29-05-2020"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+mainfont: Calibri Light
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+library(ggplot2)
+library(quantmod)
+library(tidyquant)
+library(dplyr)
+library(PerformanceAnalytics)
+library(IntroCompFinR)
+library(XLConnect)
+options(digits=2)
+options("scipen" = 10)
+
+wb <- loadWorkbook("Historial GBM2.xlsx")
+transacciones <- readWorksheet(wb,"Transacciones")
+lastdate <- nrow(transacciones)
+capm <- function(stockr, mktr, rfr) {
+    model <- lm((stockr - rfr) ~ (mktr - rfr))
+    s <-summary(model)
+    s$coefficients
+    
+    t_critical_value <- abs(qt(0.025,model$df.residual))
+    residual <- df.residual(model) + 2
+    b0 <- s$coefficients[1,1]
+    se_b0 <- s$coefficients[1,2]
+    pvalue_b0 <- s$coefficients[1,4]
+    min_b0 <- s$coefficients[1,1] - (2*s$coefficients[1,2])
+    max_b0 <- s$coefficients[1,1] + (2*s$coefficients[1,2])
+    b1 <- s$coefficients[2,1]
+    se_b1 <- s$coefficients[2,2]
+    min_b1 <- s$coefficients[2,1] - (t_critical_value * s$coefficients[2,2])
+    max_b1 <- s$coefficients[2,1] + (t_critical_value * s$coefficients[2,2])
+    
+    output= c(b0, se_b0, pvalue_b0, min_b0, max_b0, b1, se_b1, min_b1, max_b1, residual)
+    names(output)= c("b0","se(b0)","pvalue_b0", "min(b0)","max(b0)","b1","se(b1)","min(b1)","max(b1)","# non missing")
+    return(output)
+}
+```
+## Prospecto de Inversión
+
+### Objetivos y horizonte de inversión
+
+El objetivo de este portafolio de inversión es de obtener un rendimiento superior al
+índice de referencia, siendo en este caso el índice accionario mexicano, el cien por
+ciento de los activos son destinados a la inversión en el mercado de capitales nacional e internacional (mediante el SIC).
+
+Este es un portafolio de inversión a largo plazo por lo que no tiene una fecha de terminación definida.
+
+### Políticas de Inversión
+
+Este es un portafolio de inversión con gestión pasiva, por lo que las posiciónes adquiridas son pensadas en un largo plazo y por ende, las revisiones del portafolio se realizarán el primer día de cada mes.
+
+La inversión se divide en acciones nacionales e internacionales (cotizadas en el SIC)
+donde la proporción de cada uno de los activos será de mínimo 20 por ciento y máximo 
+80 por ciento.
+
+### Plataforma y comisiones
+
+La casa de bolsa con la que se hizo el portafolio es GBM, se escogió esta casa de bolsa debido a que no cobra comisión por saldos en cuenta y su comisión por transacción es muy competitiva (0.25% por transacción), otro motivo por el cual se 
+escogió esta casa de bolsa es por su plataforma llamada "GBMHomebroker" que permite 
+hacer depósitos y transacciónes en su página de internet y aplicación movil sin la
+necesidad de acudir a la casa de bolsa.
+
+## Portafolio de inversión
+
+El portafolio tiene una inversión de $200,000 MXN en la plataforma "GBMHomebroker"
+comenzó a operar el `r transacciones$Fecha[1]`
+
+### Movimientos
+
+A continuación se observan los movimientos hechos desde la fecha de inicio del portafolio hasta el presente día, cabe aclarar que no se ha vendido ninguna de las posiciones adquiridas.
+
+
+La información de transacciones obtenida del portal [GBMHomebroker](https://www.gbmhomebroker.com.mx/) en formato de archivo de Excel es transferida al programa con el paquete __XLConnect__. A continuación podemos ver las transacciones hechas en la plataforma desde el `r transacciones$Fecha[1]` hasta el `r transacciones$Fecha[lastdate]`.
+```{r echo=FALSE}
+readWorksheet(wb,"Transacciones")
+
+```
+Como podemos observar se hicieron un total de `r lastdate` transacciones durante 64 días.
+
+Al contar con acciones que cotizan en la bolsa nacional y en el extranjero, el portafolio se divide en dos subportafolios: nacional y extranjero.
+
+## Subportafolios
+
+### Subportafolio nacional
+```{r echo=FALSE}
+readWorksheet(wb,"PortMX")
+portmx <- readWorksheet(wb,"PortMX")
+```
+
+El suportafolio nacional está conformado por `r nrow(portmx)` acciones:
+`r portmx$Emisora.Fondo`
+
+Se escogieron estas empresas debido a que se identificó una oportunidad  de compra con la baja de precios de las mismas a finales de marzo, estas empresas cuentan con estados financieros sólidos y estrategias para salir adelante a pesar de los escenarios económicos negativos causados en gran medida por el __COVID-19__.
+
+Durante el periodo de tiempo analizado el portafolio generó un rendimiento del `r (sum(portmx$P...M)/sum(portmx$Imp.X.Cto.))*100`%, equivalente a una plusvalía de $`r sum(portmx$P...M)`
+
+_A continuación se presenta una gráfica de pastel con la proporción de cada acción en el portafolio nacional_
+
+```{r echo=FALSE}
+namesportmx <- portmx$Emisora.Fondo
+mktval <- portmx$Valor.mercado
+prop <- portmx$X..Cartera*100
+data <- data.frame(
+    group = namesportmx,
+    value = mktval,
+    prop = prop)
+data <- data %>% 
+    arrange(desc(group)) %>%
+    mutate(prop = value / sum(data$value) *100) %>%
+    mutate(ypos = cumsum(prop)- 0.5*prop )
+data$prop <- round(data$prop,0)
+ggplot(data, aes(x = "", y = prop, fill = group, decimals = 2)) +
+    geom_bar(width = 1, stat = "identity", color = "white") +
+    coord_polar("y", start = 0)+
+    geom_text(aes(y = ypos, label = prop), color = "white", size = 3)+
+    theme_void()
+
+```
+
+
+
+
+### Subportafolio extranjero
+```{r echo=FALSE}
+readWorksheet(wb,"PortSIC")
+portsic <- readWorksheet(wb,"PortSIC")
+```
+
+El suportafolio extranjero está conformado por `r nrow(portsic)` acciones:
+`r portsic$Emisora.Fondo`
+
+Durante el periodo de tiempo analizado el portafolio generó un rendimiento del `r (sum(portsic$P...M)/sum(portsic$Imp.X.Cto.))*100`%, equivalente a una plusvalía de $
+`r sum(portsic$P...M)`.
+
+Como se puede ver, este portafolio está conformado por acciones del sector de energéticos: Shell, Exxon Mobil y USO, un ETF que sigue los precios del crudo WTI, el motivo de compra de esta acción y ETF fue especulativo ya que al bajar de precio por los problemas de sobre oferta de petroleo se posicionaron en un rango atractivo para invertir, lo mismo sucedió con las acciones de American Airlines, Delta Airines y Hertz.
+
+Las demás acciones del portafolio se consideran más seguras y diversificadas y el motivo de la compra fue también un precio atractivo y que son empresas líderes en su sector.
+
+_A continuación se presenta una gráfica de pastel con la proporción de cada acción en el portafolio extranjero_
+```{r echo = FALSE}
+namesportsic <- portsic$Emisora.Fondo
+mktval <- portsic$Valor.mercado
+prop <- portsic$X..Cartera*100
+data <- data.frame(
+    group = namesportsic,
+    value = mktval,
+    prop = prop)
+data <- data %>% 
+    arrange(desc(group)) %>%
+    mutate(prop = value / sum(data$value) *100) %>%
+    mutate(ypos = cumsum(prop)- 0.5*prop )
+data$prop <- round(data$prop,0)
+ggplot(data, aes(x = "", y = prop, fill = group, decimals = 2)) +
+    geom_bar(width = 1, stat = "identity", color = "white") +
+    coord_polar("y", start = 0)+
+    geom_text(aes(y = ypos, label = prop), color = "white", size = 3)+
+    theme_void()
+```
+
+```{r echo=FALSE}
+totalplus <- (sum(portsic$P...M)+sum(portsic$P...M))
+totalret <- (totalplus/200000)*100
+totalreta <- ((1+(totalret/100))^(1/64))-1
+totalreta <- (((1+totalreta)^365)-1)*100
+
+```
+
+En conjunto los dos subportafolios generaron una plusvalía de __$`r totalplus`__
+y un rendimiento neto de __`r totalret`%__.
+
+La tasa anualizada del rendimiento obtenido es de __`r totalreta`%__.
+Si bien son rendimientos muy elevados, se deben principalmente a condiciones anormales del mercado durante los meses de marzo y abril.
+
+## Evaluación de acciones de subportafolio nacional
+
+Para empezar con la evaluación de las acciones de mis dos subportafolios voy a descargar la información mensual del 2019-01-01 al `r Sys.Date()`
+
+```{r echo=FALSE}
+from <- "2019-01-01"
+to <- "2019-12-31"
+tickersmx <- readWorksheet(wb,"Tickersmx")
+tickersus <- readWorksheet(wb,"Tickersus")
+```
+
+```{r message=FALSE, warning=FALSE}
+for(t in tickersmx){
+    try(getSymbols(t,from=from,to=to,periodicity="monthly",source="yahoo"))}
+ticker.vector<-c()
+for(t in ls()) {
+    if (t %in% tickersmx$tickers){
+        ticker.vector <- c(ticker.vector , t)}} 
+```
+Con el comando `getSymbols` importo los datos de las empresas mexicanas de la base de datos de Yahoo Finance.
+```{r echo=FALSE}
+objList <- lapply(ticker.vector, get)
+prices.zoo <- do.call(merge, objList)
+tickerlist <- as.list(ticker.vector)
+do.call(rm,tickerlist)
+```
+
+```{r}
+returns.df <-as.data.frame(diff(log(Ad(prices.zoo))))
+head(returns.df)
+```
+`returns.df` contiene el cálculo del rendimiento mes con mes de los precios ajustados
+```{r}
+market.zoo <- getSymbols("^MXX", from = from, to = to, periodicity = "monthly",
+                         src = "yahoo", auto.assign = FALSE)
+rmkt.df <-as.data.frame(diff(log(Ad(market.zoo))))
+```
+Se descarga la información del IPC durante la misma fecha para utilizarlo posteriormente en el cálculo del rendimiento esperado de la acción mediante el CAPM.
+```{r}
+rfr.df <- as.data.frame(getSymbols("INTGSTMXM193N",from = from, to = to, 
+                                   periodicity = "monthly", src = "FRED",
+                                   auto.assign = FALSE)[index(prices.zoo)]/100/12)
+```
+Por último se descarga la información de la [tasa libre de riesgo de México](https://fred.stlouisfed.org/series/INTGSTMXM193N) durante la misma fecha para utilizarla posteriormente en el cálculo del rendimiento esperado de la acción mediante el CAPM.
+
+### Rendimiento promedio mensual
+
+```{r echo = FALSE}
+returns.df <-na.trim(returns.df)
+meanreturns <- colMeans(returns.df)
+
+```
+```{r}
+colMeans(returns.df)
+```
+### Desviación estándar del rendimiento promedio mensual
+```{r}
+StdDev(returns.df)
+```
+
+### Rendimiento geométrico mensual
+```{r}
+ mean.geometric(returns.df)
+```
+### Rendimiento mensual anualizado
+```{r}
+colMeans(returns.df)*12
+```
+```{r echo = FALSE}
+annual_monthly_ret <- colMeans(returns.df)*12
+```
+
+### Desviación estándar mensual anualizada
+```{r}
+StdDev(returns.df)*12
+```
+
+### Sharpe Ratio
+```{r}
+SharpeRatio(returns.df,rfr.df)
+```
+### Beta
+```{r warning=FALSE, message=FALSE, eval=FALSE}
+capmresults <- NULL
+cols <- seq(1:ncol(returns.df))
+for(i in cols){
+    capmoutput <- capm(returns.df[,i],rmkt.df[,1],rfr.df[,1])
+    capmresults <- rbind(capmresults,capmoutput)
+}
+```
+```{r echo=FALSE,warning=FALSE, message=FALSE}
+capmresults <- NULL
+cols <- seq(1:ncol(returns.df))
+for(i in cols){
+    capmoutput <- capm(returns.df[,i],rmkt.df[,1],rfr.df[,1])
+    capmresults <- rbind(capmresults,capmoutput)
+}
+
+```
+```{r include=FALSE}
+capmresults[-13,]
+rownames(capmresults) <- ticker.vector
+
+```
+```{r}
+capmresults
+```
+
+Aquí podemos ver los resultados de nuestro CAPM
+
+La beta de las acciones fue de:
+```{r echo=FALSE}
+capmresults[,6]
+beta <- capmresults[,6]
+rfr_annualized <- colMeans(rfr.df)*12
+rmkt.df <- na.trim(rmkt.df)
+rmkt_annualized <- colMeans(rmkt.df)*12
+
+```
+### Trynor Ratio
+```{r}
+(annual_monthly_ret - rfr_annualized)/beta
+```
+
+### Rendimiento Esperado (CAPM)
+
+```{r}
+rfr_annualized + beta *(rmkt_annualized - rfr_annualized)
+
+```
+```{r echo = FALSE}
+Er <- rfr_annualized + beta *(rmkt_annualized - rfr_annualized)
+
+```
+
+### Alpha de Jensen
+```{r}
+annual_monthly_ret - Er
+A_Jensen <- annual_monthly_ret - Er
+```
+
+### Tracking Error
+
+```{r}
+TrackingError(returns.df,rmkt.df)
+tracking_error <- TrackingError(returns.df,rmkt.df)
+```
+### Information Ratio
+```{r}
+tracking_error/A_Jensen
+```
+
+### M2
+```{r}
+MSquared(returns.df,rmkt.df,Rf = rfr_annualized)
+```
+
