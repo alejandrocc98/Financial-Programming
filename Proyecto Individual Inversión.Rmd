@@ -342,3 +342,6 @@ tracking_error/A_Jensen
 MSquared(returns.df,rmkt.df,Rf = rfr_annualized)
 ```
 
+## Código
+https://github.com/alejandrocc98/Financial-Programming/blob/master/Proyecto%20Individual%20Inversi%C3%B3n.Rmd
+
